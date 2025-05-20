@@ -17,7 +17,9 @@ import {
   ArcElement,
   ChartData,
   ChartOptions,
-  TooltipItem, // For custom tooltips
+  TooltipItem,
+  ChartEvent,
+  ActiveElement,
 } from "chart.js";
 
 // Define types for CSV data
@@ -53,7 +55,7 @@ interface DashboardChartData {
   materialTypeDistribution: ChartData<"pie", number[], string> | null;
   yearlyTrend: ChartData<"line", number[], string> | null;
   topVendors: ChartData<"bar", number[], string> | null;
-  categoryTrendsOverYears: ChartData<"line", number[], string> | null; // New chart data
+  categoryTrendsOverYears: ChartData<"line", number[], string> | null;
 }
 
 // Register Chart.js components
@@ -107,7 +109,6 @@ const neonColors = {
   lightBlueHoverBorder: "rgb(230,230,250)",
 };
 
-// Palette for cycling through chart elements (e.g., Pie slices, multiple bars/lines if not specified)
 const neonPalette = [
   neonColors.pink,
   neonColors.green,
@@ -117,6 +118,7 @@ const neonPalette = [
   neonColors.purple,
   neonColors.lightBlue,
 ];
+
 const neonBorderPalette = [
   neonColors.pinkBorder,
   neonColors.greenBorder,
@@ -126,7 +128,7 @@ const neonBorderPalette = [
   neonColors.purpleBorder,
   neonColors.lightBlueBorder,
 ];
-// Specific colors for category trend lines for better distinction
+
 const categoryTrendColors = [
   { fill: neonColors.pink, border: neonColors.pinkBorder },
   { fill: neonColors.green, border: neonColors.greenBorder },
@@ -137,13 +139,180 @@ const categoryTrendColors = [
   { fill: neonColors.lightBlue, border: neonColors.lightBlueBorder },
 ];
 
+// Common options shared across charts
+const baseChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: "top" as const,
+      labels: { color: "#E0E0E0", font: { size: 14 } },
+    },
+    tooltip: {
+      enabled: true,
+      backgroundColor: "rgba(10, 0, 20, 0.9)",
+      titleColor: neonColors.purple,
+      bodyColor: "#E0E0E0",
+      borderColor: neonColors.purpleBorder,
+      borderWidth: 1,
+      padding: 12,
+      cornerRadius: 6,
+      titleFont: { weight: "bold" as const, size: 14 },
+      bodyFont: { size: 13 },
+      boxPadding: 4,
+    },
+  },
+  onHover: (event: ChartEvent, chartElements: ActiveElement[]) => {
+    const target = event.native?.target as HTMLElement | null;
+    if (target) {
+      target.style.cursor = chartElements.length > 0 ? "pointer" : "default";
+    }
+  },
+};
+
+// Specific options for Bar charts
+const barChartOptions = (
+  titleText: string,
+  isHorizontal: boolean = false
+): ChartOptions<"bar"> => ({
+  ...baseChartOptions,
+  indexAxis: isHorizontal ? ("y" as const) : ("x" as const),
+  interaction: {
+    mode: isHorizontal ? ("y" as const) : ("index" as const),
+    intersect: false,
+  },
+  plugins: {
+    ...baseChartOptions.plugins,
+    title: {
+      display: true,
+      text: titleText,
+      color: "#FFFFFF",
+      font: { size: 20, weight: "bold" as const },
+      padding: { top: 10, bottom: 20 },
+    },
+    tooltip: {
+      ...baseChartOptions.plugins.tooltip,
+      callbacks: {
+        label: (context: TooltipItem<"bar">) => {
+          let label = context.dataset.label || "";
+          if (label) {
+            label += ": ";
+          }
+          const value = isHorizontal ? context.parsed.x : context.parsed.y;
+          if (value !== null && value !== undefined) {
+            label +=
+              new Intl.NumberFormat("en-US", {
+                maximumFractionDigits: 0,
+              }).format(value) + " lbs";
+          }
+          return label;
+        },
+      },
+    },
+  },
+  scales: {
+    x: {
+      ticks: { color: "#A0A0A0", font: { size: 12 } },
+      grid: { color: "rgba(255, 255, 255, 0.1)" },
+    },
+    y: {
+      ticks: { color: "#A0A0A0", font: { size: 12 } },
+      grid: { color: "rgba(255, 255, 255, 0.1)" },
+    },
+  },
+});
+
+// Specific options for Line charts
+const lineChartOptions = (titleText: string): ChartOptions<"line"> => ({
+  ...baseChartOptions,
+  interaction: {
+    mode: "index" as const,
+    intersect: false,
+  },
+  plugins: {
+    ...baseChartOptions.plugins,
+    title: {
+      display: true,
+      text: titleText,
+      color: "#FFFFFF",
+      font: { size: 20, weight: "bold" as const },
+      padding: { top: 10, bottom: 20 },
+    },
+    tooltip: {
+      ...baseChartOptions.plugins.tooltip,
+      callbacks: {
+        label: (context: TooltipItem<"line">) => {
+          let label = context.dataset.label || "";
+          if (label) {
+            label += ": ";
+          }
+          if (context.parsed.y !== null && context.parsed.y !== undefined) {
+            label +=
+              new Intl.NumberFormat("en-US", {
+                maximumFractionDigits: 0,
+              }).format(context.parsed.y) + " lbs";
+          }
+          return label;
+        },
+      },
+    },
+  },
+  scales: {
+    x: {
+      ticks: { color: "#A0A0A0", font: { size: 12 } },
+      grid: { color: "rgba(255, 255, 255, 0.1)" },
+    },
+    y: {
+      ticks: { color: "#A0A0A0", font: { size: 12 } },
+      grid: { color: "rgba(255, 255, 255, 0.1)" },
+    },
+  },
+});
+
+// Specific options for Pie charts
+const pieChartOptions = (titleText: string): ChartOptions<"pie"> => ({
+  ...baseChartOptions,
+  interaction: {
+    mode: "point" as const,
+    intersect: true,
+  },
+  plugins: {
+    ...baseChartOptions.plugins,
+    title: {
+      display: true,
+      text: titleText,
+      color: "#FFFFFF",
+      font: { size: 20, weight: "bold" as const },
+      padding: { top: 10, bottom: 20 },
+    },
+    tooltip: {
+      ...baseChartOptions.plugins.tooltip,
+      callbacks: {
+        label: (context: TooltipItem<"pie">) => {
+          let label = context.dataset.label || "";
+          if (label) {
+            label += ": ";
+          }
+          if (typeof context.raw === "number") {
+            label +=
+              new Intl.NumberFormat("en-US", {
+                maximumFractionDigits: 0,
+              }).format(context.raw) + " lbs";
+          }
+          return label;
+        },
+      },
+    },
+  },
+});
+
 export default function DashboardPage(): JSX.Element {
   const [chartData, setChartData] = useState<DashboardChartData>({
     categoryWeight: null,
     materialTypeDistribution: null,
     yearlyTrend: null,
     topVendors: null,
-    categoryTrendsOverYears: null, // Initialize new chart data
+    categoryTrendsOverYears: null,
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +324,9 @@ export default function DashboardPage(): JSX.Element {
         setError(null);
         const response = await fetch("/cleaned_wastedata_final.csv");
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(
+            `HTTP error! Status: ${response.status}. Unable to fetch cleaned_wastedata_final.csv.`
+          );
         }
         const csvText = await response.text();
 
@@ -166,27 +337,34 @@ export default function DashboardPage(): JSX.Element {
             const rawData = results.data;
 
             const processedData: ProcessedDataRow[] = rawData
-              .map((row) => ({
-                Year: parseInt(row.Year, 10),
-                Month: row.Month || "Unknown",
-                Day: row.Day || "Unknown",
-                Category: row.Category || "Unknown",
-                "Material Type": row["Material Type"] || "Unknown",
-                "Weight (lbs)": parseFloat(
+              .map((row) => {
+                const year = parseInt(row.Year, 10);
+                const weight = parseFloat(
                   String(row["Weight (lbs)"]).replace(/,/g, "")
-                ),
-                Vendor: row.Vendor || "unknown",
-                "Date Updated": row["Date Updated"] || "Unknown",
-                Cost: parseFloat(String(row.Cost).replace(/[^0-9$.-]+/g, "")),
-                Notes: row.Notes || "Unknown",
-              }))
-              .filter(
-                (row) =>
-                  row.Category &&
-                  !isNaN(row["Weight (lbs)"]) &&
-                  !isNaN(row.Year) &&
-                  (row.Cost === undefined || !isNaN(row.Cost))
-              );
+                );
+                const cost = parseFloat(
+                  String(row.Cost).replace(/[^0-9$.-]+/g, "")
+                );
+                if (isNaN(year) || isNaN(weight)) {
+                  console.warn(
+                    `Invalid row skipped: Year=${row.Year}, Weight=${row["Weight (lbs)"]}`
+                  );
+                  return null;
+                }
+                return {
+                  Year: year,
+                  Month: row.Month || "Unknown",
+                  Day: row.Day || "Unknown",
+                  Category: row.Category || "Unknown",
+                  "Material Type": row["Material Type"] || "Unknown",
+                  "Weight (lbs)": weight,
+                  Vendor: row.Vendor || "unknown",
+                  "Date Updated": row["Date Updated"] || "Unknown",
+                  Cost: isNaN(cost) ? 0 : cost,
+                  Notes: row.Notes || "Unknown",
+                };
+              })
+              .filter((row): row is ProcessedDataRow => row !== null);
 
             if (processedData.length === 0) {
               console.warn(
@@ -287,7 +465,7 @@ export default function DashboardPage(): JSX.Element {
               },
             }));
 
-            // 4. Top 10 Vendors by Waste Weight (Horizontal Bar Chart) - WITH FILTERING
+            // 4. Top 10 Vendors by Waste Weight (Horizontal Bar Chart)
             const vendorAgg = processedData.reduce((acc, row) => {
               const vendor = row.Vendor;
               acc[vendor] = (acc[vendor] || 0) + row["Weight (lbs)"];
@@ -295,8 +473,7 @@ export default function DashboardPage(): JSX.Element {
             }, {} as Record<string, number>);
 
             const filteredVendorEntries = Object.entries(vendorAgg).filter(
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              ([name, _weight]) => {
+              ([name]) => {
                 if (name === "unknown") {
                   return true;
                 }
@@ -334,7 +511,9 @@ export default function DashboardPage(): JSX.Element {
               string,
               Record<number, number>
             > = {};
-            categories.forEach((cat) => (categoryYearlyData[cat] = {}));
+            categories.forEach((cat) => {
+              categoryYearlyData[cat] = {};
+            });
 
             processedData.forEach((row) => {
               categoryYearlyData[row.Category][row.Year] =
@@ -393,101 +572,6 @@ export default function DashboardPage(): JSX.Element {
     fetchData();
   }, []);
 
-  // Common Chart.js options for dark theme
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const commonChartOptions = (titleText: string): ChartOptions<any> => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: "index" as const,
-      intersect: false,
-    },
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: { color: "#E0E0E0", font: { size: 14 } },
-      },
-      title: {
-        display: true,
-        text: titleText,
-        color: "#FFFFFF",
-        font: { size: 20, weight: "bold" as const },
-        padding: { top: 10, bottom: 20 },
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: "rgba(10, 0, 20, 0.9)",
-        titleColor: neonColors.purple,
-        bodyColor: "#E0E0E0",
-        borderColor: neonColors.purpleBorder,
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 6,
-        titleFont: { weight: "bold" as const, size: 14 },
-        bodyFont: { size: 13 },
-        boxPadding: 4,
-        callbacks: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          label: function (context: TooltipItem<any>) {
-            let label = context.dataset.label || "";
-            if (label) {
-              label += ": ";
-            }
-            if (context.parsed.y !== null && context.parsed.y !== undefined) {
-              label +=
-                new Intl.NumberFormat("en-US", {
-                  maximumFractionDigits: 0,
-                }).format(context.parsed.y) + " lbs";
-            } else if (
-              context.parsed.x !== null &&
-              context.parsed.x !== undefined &&
-              context.chart.config.type === "bar" &&
-              context.chart.config.options?.indexAxis === "y"
-            ) {
-              label +=
-                new Intl.NumberFormat("en-US", {
-                  maximumFractionDigits: 0,
-                }).format(context.parsed.x) + " lbs";
-            } else if (
-              context.parsed !== null &&
-              context.parsed !== undefined &&
-              typeof context.parsed === "number" &&
-              context.chart.config.type === "pie"
-            ) {
-              label +=
-                new Intl.NumberFormat("en-US", {
-                  maximumFractionDigits: 0,
-                }).format(context.parsed as number) + " lbs";
-            }
-            return label;
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        ticks: { color: "#A0A0A0", font: { size: 12 } },
-        grid: {
-          color: "rgba(255, 255, 255, 0.1)",
-          borderColor: "rgba(255, 255, 255, 0.1)",
-        },
-      },
-      y: {
-        ticks: { color: "#A0A0A0", font: { size: 12 } },
-        grid: {
-          color: "rgba(255, 255, 255, 0.1)",
-          borderColor: "rgba(255, 255, 255, 0.1)",
-        },
-      },
-    },
-    onHover: (event, chartElements, chart) => {
-      const target = event.native?.target as HTMLElement | null;
-      if (target) {
-        target.style.cursor = chartElements.length > 0 ? "pointer" : "default";
-      }
-    },
-  });
-
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-indigo-950 to-purple-900 text-white p-4">
@@ -534,7 +618,7 @@ export default function DashboardPage(): JSX.Element {
             {chartData.categoryWeight &&
             chartData.categoryWeight.labels?.length ? (
               <Bar
-                options={commonChartOptions("Total Weight by Category")}
+                options={barChartOptions("Total Weight by Category")}
                 data={chartData.categoryWeight}
               />
             ) : (
@@ -548,10 +632,7 @@ export default function DashboardPage(): JSX.Element {
             {chartData.materialTypeDistribution &&
             chartData.materialTypeDistribution.labels?.length ? (
               <Pie
-                options={{
-                  ...commonChartOptions("Material Type Distribution"),
-                  interaction: { mode: "point" as const, intersect: true },
-                }}
+                options={pieChartOptions("Material Type Distribution")}
                 data={chartData.materialTypeDistribution}
               />
             ) : (
@@ -564,7 +645,7 @@ export default function DashboardPage(): JSX.Element {
           <div className="bg-black bg-opacity-70 p-4 md:p-6 rounded-xl shadow-2xl shadow-green-500/30 chart-container">
             {chartData.yearlyTrend && chartData.yearlyTrend.labels?.length ? (
               <Line
-                options={commonChartOptions(
+                options={lineChartOptions(
                   "Total Waste Weight Trend Over Years"
                 )}
                 data={chartData.yearlyTrend}
@@ -579,13 +660,7 @@ export default function DashboardPage(): JSX.Element {
           <div className="bg-black bg-opacity-70 p-4 md:p-6 rounded-xl shadow-2xl shadow-blue-500/30 chart-container">
             {chartData.topVendors && chartData.topVendors.labels?.length ? (
               <Bar
-                options={{
-                  ...(commonChartOptions(
-                    "Top 10 Vendors by Weight"
-                  ) as ChartOptions<"bar">),
-                  indexAxis: "y" as const,
-                  interaction: { mode: "y" as const, intersect: false },
-                }}
+                options={barChartOptions("Top 10 Vendors by Weight", true)}
                 data={chartData.topVendors}
               />
             ) : (
@@ -595,14 +670,11 @@ export default function DashboardPage(): JSX.Element {
             )}
           </div>
 
-          {/* New Chart: Category Trends Over Years */}
           <div className="bg-black bg-opacity-70 p-4 md:p-6 rounded-xl shadow-2xl shadow-yellow-500/30 chart-container lg:col-span-2">
-            {" "}
-            {/* Spanning two columns for better visibility */}
             {chartData.categoryTrendsOverYears &&
             chartData.categoryTrendsOverYears.labels?.length ? (
               <Line
-                options={commonChartOptions(
+                options={lineChartOptions(
                   "Waste Category Trends Over Years (lbs)"
                 )}
                 data={chartData.categoryTrendsOverYears}
@@ -615,12 +687,10 @@ export default function DashboardPage(): JSX.Element {
           </div>
         </div>
 
-        {/* Storytelling and Design Rationale Section */}
         <section className="mt-12 md:mt-16 max-w-5xl mx-auto p-6 bg-black bg-opacity-60 rounded-lg shadow-xl text-gray-300">
           <h2 className="text-3xl font-bold text-purple-400 mb-6 text-center">
             About the Dashboard: Unveiling the Waste Story
           </h2>
-
           <div className="space-y-8 text-lg leading-relaxed">
             <div>
               <h3 className="text-2xl font-semibold text-pink-400 mb-3">
@@ -805,7 +875,7 @@ export default function DashboardPage(): JSX.Element {
 
         <footer className="text-center py-10 mt-10 text-gray-500">
           <p>
-            &copy; {new Date().getFullYear()} Vamsikrishna Nouluri. All rights
+            © {new Date().getFullYear()} Vamsikrishna Nouluri. All rights
             reserved.
           </p>
           <p>Waste Data Visualization Project</p>
