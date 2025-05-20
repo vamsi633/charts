@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import Head from "next/head";
 import Papa, { ParseResult } from "papaparse";
 import { Bar, Line, Pie } from "react-chartjs-2";
@@ -295,6 +295,7 @@ export default function DashboardPage(): JSX.Element {
             }, {} as Record<string, number>);
 
             const filteredVendorEntries = Object.entries(vendorAgg).filter(
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               ([name, _weight]) => {
                 if (name === "unknown") {
                   return true;
@@ -393,6 +394,7 @@ export default function DashboardPage(): JSX.Element {
   }, []);
 
   // Common Chart.js options for dark theme
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const commonChartOptions = (titleText: string): ChartOptions<any> => ({
     responsive: true,
     maintainAspectRatio: false,
@@ -425,6 +427,7 @@ export default function DashboardPage(): JSX.Element {
         bodyFont: { size: 13 },
         boxPadding: 4,
         callbacks: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           label: function (context: TooltipItem<any>) {
             let label = context.dataset.label || "";
             if (label) {
@@ -631,7 +634,7 @@ export default function DashboardPage(): JSX.Element {
                 <li>
                   The{" "}
                   <strong className="text-pink-400">
-                    "Total Weight by Category"
+                    &quot;Total Weight by Category&quot;
                   </strong>{" "}
                   chart highlights which waste categories (e.g., recycle,
                   landfill, compost, reuse) contribute most to the overall waste
@@ -641,7 +644,7 @@ export default function DashboardPage(): JSX.Element {
                 <li>
                   The{" "}
                   <strong className="text-pink-400">
-                    "Material Type Distribution"
+                    &quot;Material Type Distribution&quot;
                   </strong>{" "}
                   pie chart breaks down the composition of waste, showing the
                   proportion of different material types. This is crucial for
@@ -651,7 +654,7 @@ export default function DashboardPage(): JSX.Element {
                 <li>
                   The{" "}
                   <strong className="text-green-400">
-                    "Total Waste Weight Trend Over Years"
+                    &quot;Total Waste Weight Trend Over Years&quot;
                   </strong>{" "}
                   line chart tracks the total amount of waste generated over
                   time. This reveals long-term trends, such as whether waste
@@ -660,7 +663,7 @@ export default function DashboardPage(): JSX.Element {
                 <li>
                   The{" "}
                   <strong className="text-yellow-400">
-                    "Waste Category Trends Over Years"
+                    &quot;Waste Category Trends Over Years&quot;
                   </strong>{" "}
                   chart provides a deeper dive, showing how the volume of each
                   specific waste category (recycle, landfill, etc.) has changed
@@ -671,7 +674,7 @@ export default function DashboardPage(): JSX.Element {
                 <li>
                   The{" "}
                   <strong className="text-blue-400">
-                    "Top 10 Vendors by Weight"
+                    &quot;Top 10 Vendors by Weight&quot;
                   </strong>{" "}
                   chart (after filtering out numerical/non-name entries)
                   identifies the primary service providers handling the waste.
@@ -681,8 +684,8 @@ export default function DashboardPage(): JSX.Element {
               </ul>
               <p className="mt-3">
                 By exploring these visualizations, we can better understand the
-                campus's waste footprint, identify areas for improvement, and
-                track progress towards sustainability goals.
+                campus&apos;s waste footprint, identify areas for improvement,
+                and track progress towards sustainability goals.
               </p>
             </div>
 
@@ -704,8 +707,8 @@ export default function DashboardPage(): JSX.Element {
                       <strong className="text-gray-200">Bar Charts</strong>{" "}
                       (Category Weight, Top Vendors): Chosen for their
                       effectiveness in comparing the magnitude of discrete
-                      categories. The horizontal orientation for "Top Vendors"
-                      improves readability of longer vendor names.
+                      categories. The horizontal orientation for &quot;Top
+                      Vendors&quot; improves readability of longer vendor names.
                     </li>
                     <li>
                       <strong className="text-gray-200">Pie Chart</strong>{" "}
@@ -737,11 +740,11 @@ export default function DashboardPage(): JSX.Element {
                   . This creates a modern, focused environment.{" "}
                   <strong className="text-gray-200">Neon colors</strong> (pinks,
                   greens, blues, yellows, etc.) are used for plot points, lines,
-                  and bars. This high contrast makes the data elements "pop"
-                  against the dark backdrop, enhancing visibility and drawing
-                  attention to key information. Distinct colors are assigned to
-                  each category in the "Category Trends" chart for easy
-                  differentiation.
+                  and bars. This high contrast makes the data elements
+                  &quot;pop&quot; against the dark backdrop, enhancing
+                  visibility and drawing attention to key information. Distinct
+                  colors are assigned to each category in the &quot;Category
+                  Trends&quot; chart for easy differentiation.
                 </li>
                 <li>
                   <strong className="text-purple-300">Interactivity:</strong>{" "}
@@ -757,8 +760,9 @@ export default function DashboardPage(): JSX.Element {
                       <strong className="text-gray-200">
                         Legend Toggling:
                       </strong>{" "}
-                      Clicking on items in a chart's legend allows users to show
-                      or hide specific datasets, enabling focused comparisons.
+                      Clicking on items in a chart&apos;s legend allows users to
+                      show or hide specific datasets, enabling focused
+                      comparisons.
                     </li>
                     <li>
                       <strong className="text-gray-200">Hover Effects:</strong>{" "}
@@ -772,16 +776,16 @@ export default function DashboardPage(): JSX.Element {
                 <li>
                   <strong className="text-purple-300">Size & Layout:</strong>{" "}
                   Charts are presented in a responsive grid layout. The
-                  "Category Trends Over Years" chart is given a full-width span
-                  on larger screens (lg:col-span-2) to accommodate multiple
-                  lines and ensure readability. The `chart-container` class
-                  helps maintain a consistent and adequate height for each
-                  chart.
+                  &quot;Category Trends Over Years&quot; chart is given a
+                  full-width span on larger screens (lg:col-span-2) to
+                  accommodate multiple lines and ensure readability. The
+                  `chart-container` class helps maintain a consistent and
+                  adequate height for each chart.
                 </li>
                 <li>
                   <strong className="text-purple-300">Readability:</strong> Text
                   elements, including titles, labels, and the descriptive text
-                  you're reading now, use light colors (#FFFFFF, #E0E0E0,
+                  you&apos;re reading now, use light colors (#FFFFFF, #E0E0E0,
                   #A0A0A0) for high contrast against the dark backgrounds,
                   ensuring good legibility. Font sizes are chosen to be clear
                   and hierarchical.
